@@ -1,7 +1,20 @@
-import { Stack } from 'expo-router';
+import { useEffect } from 'react';
+import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { AuthProvider, useAuth } from '../lib/auth-context';
 
-export default function RootLayout() {
+function RootNavigator() {
+  const { session, loading } = useAuth();
+
+  useEffect(() => {
+    if (loading) return;
+    if (session) {
+      router.replace('/(tabs)');
+    } else {
+      router.replace('/(auth)/login');
+    }
+  }, [session, loading]);
+
   return (
     <>
       <StatusBar style="auto" />
@@ -10,5 +23,13 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" />
       </Stack>
     </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <RootNavigator />
+    </AuthProvider>
   );
 }

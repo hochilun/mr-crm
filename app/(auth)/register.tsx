@@ -7,17 +7,37 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
+import { supabase } from '../../lib/supabase';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleRegister = () => {
-    // TODO: 串接 Supabase Auth
-    router.replace('/(tabs)');
+  const handleRegister = async () => {
+    if (!name || !email || !password) {
+      Alert.alert('請填寫所有欄位');
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: name } },
+    });
+    setLoading(false);
+    if (error) {
+      Alert.alert('註冊失敗', error.message);
+    } else {
+      Alert.alert('註冊成功', '請查收驗證信件後再登入', [
+        { text: '好', onPress: () => router.back() },
+      ]);
+    }
   };
 
   return (
@@ -45,14 +65,14 @@ export default function RegisterScreen() {
         />
         <TextInput
           style={styles.input}
-          placeholder="密碼"
+          placeholder="密碼（至少 6 個字元）"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleRegister}>
-          <Text style={styles.buttonText}>註冊</Text>
+        <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>註冊</Text>}
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.back()}>
